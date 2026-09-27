@@ -25,7 +25,9 @@ BUILD = os.path.join(HERE, "build")
 MEDIA = os.path.join(BUILD, "media")
 OUT_DIR = os.path.join(HERE, "output")
 SCENE_CLASSES = ["S01Intro", "S02History", "S03Numeric", "S04Poly", "S05Sine",
-                 "S06Compare", "S07WhyPi", "S08Rigor", "S09Legacy", "S10Outro"]
+                 "S06Compare", "S07Radian", "S08Squared", "S09Light", "S10InvPyth",
+                 "S11Lake", "S12Doubling", "S13Meaning", "S14ComputePi", "S15Rigor",
+                 "S16Legacy", "S17Outro"]
 KEYS = [k for k, _ in SCENES]
 FONT = "Noto Sans CJK SC"
 
@@ -158,6 +160,7 @@ def main():
     ap.add_argument("--only", default="")
     ap.add_argument("--skip-render", action="store_true")
     ap.add_argument("--jobs", type=int, default=3)
+    ap.add_argument("--no-assemble", action="store_true")
     args = ap.parse_args()
     todo = [] if args.skip_render else (args.only.split(",") if args.only else SCENE_CLASSES)
     if todo:
@@ -166,7 +169,8 @@ def main():
                 print(f"{cls}: {'ok' if code == 0 else 'FAILED, see ' + log}", flush=True)
                 if code:
                     sys.exit(1)
-    assemble()
+    if not args.no_assemble:
+        assemble()
 
 
 if __name__ == "__main__":

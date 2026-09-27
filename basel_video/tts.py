@@ -21,7 +21,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.environ.get("MODEL_DIR", "/tmp/claude-0/tts")
 OUT = os.path.join(HERE, "build", "audio")
 SPEAKER = int(os.environ.get("SPEAKER", "90"))  # Chinese male voice
-SPEED = float(os.environ.get("SPEED", "1.12"))
+SPEED = float(os.environ.get("SPEED", "1.1"))
 TAKES = int(os.environ.get("TAKES", "4"))
 
 os.makedirs(OUT, exist_ok=True)
@@ -34,6 +34,11 @@ LEXICON_FIXES = {
     "倒数": "倒数 ㄉ ㄠ 4 ㄕ ㄨ 4",
     "小数点": "小数点 ㄒ 要 3 ㄕ ㄨ 4 ㄉ 言 3",
 }
+# Words missing from the stock lexicon whose per-character reading is wrong
+# (塞 defaults to sāi; the city is Bāsài'ěr).
+LEXICON_ADDITIONS = [
+    "巴塞尔 ㄅ ㄚ 1 ㄙ ㄞ 4 ㄦ 3",
+]
 patched_lex = os.path.join(HERE, "build", "lexicon-zh-patched.txt")
 os.makedirs(os.path.dirname(patched_lex), exist_ok=True)
 with open(f"{kd}/lexicon-zh.txt", encoding="utf-8") as fin, \
@@ -41,6 +46,7 @@ with open(f"{kd}/lexicon-zh.txt", encoding="utf-8") as fin, \
     for row in fin:
         word = row.split(" ", 1)[0]
         fout.write(LEXICON_FIXES[word] + "\n" if word in LEXICON_FIXES else row)
+    fout.write("\n".join(LEXICON_ADDITIONS) + "\n")
 
 tts = sherpa_onnx.OfflineTts(sherpa_onnx.OfflineTtsConfig(
     model=sherpa_onnx.OfflineTtsModelConfig(

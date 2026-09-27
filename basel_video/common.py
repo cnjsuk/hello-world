@@ -20,8 +20,20 @@ CJK = "Noto Sans CJK SC"
 # Keep all visuals above this y so the burned-in subtitles never cover them.
 SAFE_BOTTOM = -2.95
 
-with open(os.path.join(BUILD, "durations.json"), encoding="utf-8") as fh:
-    DURATIONS = json.load(fh)
+def _load_durations():
+    """Real clip durations from tts.py, or (for layout previews before the
+    narration exists) an estimate of ~4.5 spoken characters per second."""
+    path = os.path.join(BUILD, "durations.json")
+    if os.environ.get("PREVIEW") or not os.path.exists(path):
+        from script import SCENES
+        return {key: [{"wav": None, "dur": len("".join(sp for _, sp in line)) / 4.5,
+                       "chunks": [[c, len(sp)] for c, sp in line]} for line in lines]
+                for key, lines in SCENES}
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+DURATIONS = _load_durations()
 
 
 def zh(text, size=36, color=WHITE, bold=False, **kw):
@@ -53,7 +65,8 @@ class VScene(Scene):
     def say(self, i):
         self.hold()
         info = self.lines[i]
-        self.add_sound(os.path.join(HERE, info["wav"]))
+        if info["wav"]:
+            self.add_sound(os.path.join(HERE, info["wav"]))
         self.cues.append({"line": i, "start": round(self.time, 4)})
         self._end = self.time + info["dur"]
         return info["dur"]
