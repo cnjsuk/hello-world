@@ -25,20 +25,49 @@
 依赖：Python 3.11、[manim](https://www.manim.community/) 0.21、LaTeX（texlive）、ffmpeg（含 libass）、
 Noto Sans CJK 字体、`sherpa-onnx`、`soundfile`、`scipy`。
 
-旁白用离线 TTS 生成（sherpa-onnx + Kokoro v1.1-zh，男声 sid 90），每句合成多遍，再用 SenseVoice
-语音识别回听挑选发音最准的一版。模型从 sherpa-onnx 的 GitHub Releases 下载到 `MODEL_DIR`：
+### 用微软语音配音（推荐）
 
-- `tts-models/kokoro-multi-lang-v1_1.tar.bz2`
+配音可以在你自己的电脑上用微软神经语音生成：见 [`local_tts/README.md`](local_tts/README.md)。
+生成的 `voice_ms/` 推回仓库后，运行：
+
+```bash
+python3 ingest_voice.py      # 转成 build/audio/*.wav，写 build/durations.json（字幕按逐词时间戳对齐）
+python3 build.py             # 按新时长重新渲染并合成
+```
+
+### 离线配音
+
+旁白用 [ZipVoice](https://github.com/k2-fsa/ZipVoice)（k2-fsa 的零样本流匹配 TTS，经 sherpa-onnx 运行）离线生成。
+参考音 `voice/prompt.wav` 是纯合成的（先由 Kokoro v1.1-zh 男声生成、再由 ZipVoice 重新合成一次），
+不克隆任何真人声音。每句至少生成 2 遍，用 SenseVoice 语音识别回听（字错率）和 UTMOS 自然度评分挑选最好的一版；
+`tts_zipvoice.py` 里还修正了词典中几个多音字（倒数、巴塞尔、转动等）。
+
+在同样 5 句旁白上的对比（UTMOS 为自动自然度评分，满分 5）：
+
+| 引擎 | 字错率 | UTMOS |
+| --- | --- | --- |
+| Kokoro v1.1-zh（旧版旁白） | 3.1% | 3.13 |
+| Matcha zh-baker | 3.9% | 2.88 |
+| MeloTTS zh_en | 7.7% | 2.58 |
+| ZipVoice（本片使用） | 2.0% | 3.50 |
+
+模型从 sherpa-onnx 的 GitHub Releases 下载到 `MODEL_DIR`：
+
+- `tts-models/sherpa-onnx-zipvoice-zh-en-emilia.tar.bz2`（fp32 权重）
+- `tts-models/sherpa-onnx-zipvoice-distill-int8-zh-en-emilia.tar.bz2`（词典与 tokens）
+- `vocoder-models/vocos_24khz.onnx`
 - `asr-models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17.tar.bz2`
+- UTMOS（可选）：[tarepan/SpeechMOS](https://github.com/tarepan/SpeechMOS) 代码及其 v1.0.0 release 权重，放在 `UTMOS_DIR`
 
 ```bash
 cd basel_video
-MODEL_DIR=/path/to/models python3 tts.py   # 生成 build/audio/*.wav 与 build/durations.json
+MODEL_DIR=/path/to/models python3 tts_zipvoice.py   # 生成 build/audio/*.wav 与 build/durations.json
 python3 build.py                           # 渲染 17 个场景（1080p60）并合成成品
 PREVIEW=1 manim -ql scenes.py S12Doubling  # 不需要旁白的低清排版预览
 ```
 
 - `script.py`：旁白稿（字幕文字 + 朗读文字）
+- `tts_zipvoice.py`：ZipVoice 配音；`tts.py` 是早先的 Kokoro 版本
 - `scenes.py`：manim 动画，每个场景按旁白时长自动对齐
 - `music.py`：合成很轻的背景铺底音
 - `build.py`：拼接场景、烧录字幕、混音、响度标准化（−16 LUFS）

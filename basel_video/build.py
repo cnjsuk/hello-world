@@ -73,8 +73,11 @@ def build_subtitles(offsets):
         for cue in cues:
             line = durations[key][cue["line"]]
             start = off + cue["start"]
-            weights = np.array([n for _, n in line["chunks"]], dtype=float)
-            bounds = start + line["dur"] * np.concatenate([[0], np.cumsum(weights) / weights.sum()])
+            if "chunk_times" in line:  # word timestamps from the TTS service
+                bounds = start + np.array(line["chunk_times"] + [line["dur"]])
+            else:  # otherwise spread the line by character count
+                weights = np.array([n for _, n in line["chunks"]], dtype=float)
+                bounds = start + line["dur"] * np.concatenate([[0], np.cumsum(weights) / weights.sum()])
             for (caption, _), a, b in zip(line["chunks"], bounds[:-1], bounds[1:]):
                 events.append([a, b, caption])
     events.sort()
