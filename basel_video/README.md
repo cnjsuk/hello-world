@@ -1,6 +1,6 @@
 # 巴塞尔问题：π 为什么会出现在平方倒数和里？
 
-约 13 分钟、1920×1080 / 60 fps 的中文讲解视频，成品在
+约 11 分半、1920×1080 / 60 fps 的中文讲解视频，旁白为微软神经语音云希（zh-CN-YunxiNeural），成品在
 [`output/basel_problem_1080p60.mp4`](output/basel_problem_1080p60.mp4)，
 字幕文件在 [`output/basel_problem.zh.srt`](output/basel_problem.zh.srt)。
 
@@ -35,9 +35,9 @@ python3 ingest_voice.py      # 转成 build/audio/*.wav，写 build/durations.js
 python3 build.py             # 按新时长重新渲染并合成
 ```
 
-### 离线配音
+### 离线配音（备用）
 
-旁白用 [ZipVoice](https://github.com/k2-fsa/ZipVoice)（k2-fsa 的零样本流匹配 TTS，经 sherpa-onnx 运行）离线生成。
+不方便用微软语音时，可以用 [ZipVoice](https://github.com/k2-fsa/ZipVoice)（k2-fsa 的零样本流匹配 TTS，经 sherpa-onnx 运行）离线生成旁白。
 参考音 `voice/prompt.wav` 是纯合成的（先由 Kokoro v1.1-zh 男声生成、再由 ZipVoice 重新合成一次），
 不克隆任何真人声音。每句至少生成 2 遍，用 SenseVoice 语音识别回听（字错率）和 UTMOS 自然度评分挑选最好的一版；
 `tts_zipvoice.py` 里还修正了词典中几个多音字（倒数、巴塞尔、转动等）。
@@ -49,7 +49,7 @@ python3 build.py             # 按新时长重新渲染并合成
 | Kokoro v1.1-zh（旧版旁白） | 3.1% | 3.13 |
 | Matcha zh-baker | 3.9% | 2.88 |
 | MeloTTS zh_en | 7.7% | 2.58 |
-| ZipVoice（本片使用） | 2.0% | 3.50 |
+| ZipVoice（离线方案里最好） | 2.0% | 3.50 |
 
 模型从 sherpa-onnx 的 GitHub Releases 下载到 `MODEL_DIR`：
 
